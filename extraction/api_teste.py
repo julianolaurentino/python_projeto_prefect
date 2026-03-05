@@ -5,8 +5,7 @@ import json
 
 # -- Constantes --
 
-PAGINACAO = 10
-LIMITE = 12
+LIMITE = 100
 
 # -- Funções auxiliares --
 
