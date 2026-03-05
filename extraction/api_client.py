@@ -7,9 +7,10 @@ import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
 from loguru import logger
 
+# -- Constantes --
+
 BASE_URL = "https://api.artic.edu/api/v1/artworks"
 
-# Campos que vamos extrair da API
 FIELDS = ",".join([
     "id",
     "title",
@@ -32,12 +33,16 @@ FIELDS = ",".join([
     "credit_line",
 ])
 
+# -- Parametros de retry para lidar com falhas temporárias da API --
 
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
     reraise=True,
 )
+
+# -- Funções --
+
 def fetch_page(page: int, limit: int = 100) -> dict:
     """
     Busca uma página de obras de arte da API.
