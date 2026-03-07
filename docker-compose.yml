@@ -1,0 +1,88 @@
+services:
+
+  # ─────────────────────────────────────────
+  # Extração + Carga → Bronze
+  # ─────────────────────────────────────────
+  extraction:
+    build:
+      context: ./extraction
+      dockerfile: Dockerfile
+    container_name: aic_extraction
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./extraction/src:/app/src
+    networks:
+      - aic_network
+    depends_on:
+      - prefect-server
+
+  # ─────────────────────────────────────────
+  # Transformação → Silver + Gold (dbt)
+  # ─────────────────────────────────────────
+  transform:
+    build:
+      context: ./transform
+      dockerfile: Dockerfile
+    container_name: aic_transform
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./transform:/app/transform
+    networks:
+      - aic_network
+    depends_on:
+      - extraction
+
+  # ─────────────────────────────────────────
+  # Orquestração — Prefect Server (UI + API)
+  # ─────────────────────────────────────────
+  prefect-server:
+    image: prefecthq/prefect:2.19.3-python3.11
+    container_name: aic_prefect_server
+    command: prefect server start --host 0.0.0.0
+    ports:
+      - "4200:4200"
+    volumes:
+      - prefect_data:/root/.prefect
+    networks:
+      - aic_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────
+  # Orquestração — Prefect Worker (executa os flows)
+  # ─────────────────────────────────────────
+  prefect-worker:
+    build:
+      context: ./orchestration
+      dockerfile: Dockerfile
+    container_name: aic_prefect_worker
+    env_file: .env
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+    volumes:
+      - ./data:/app/data
+      - ./orchestration:/app/orchestration
+      - ./extraction:/app/extraction
+      - ./transform:/app/transform
+    networks:
+      - aic_network
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+    command: >
+      sh -c "
+        prefect work-pool create aic-pool --type process --overwrite &&
+        python /app/orchestration/flows/main_flow.py
+      "
+
+volumes:
+  prefect_data:
+
+networks:
+  aic_network:
+    driver: bridge
