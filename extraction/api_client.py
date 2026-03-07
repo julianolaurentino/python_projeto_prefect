@@ -1,8 +1,3 @@
-"""
-api_client.py
-Responsável por toda comunicação com a API do Art Institute of Chicago.
-"""
-
 import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
 from loguru import logger
@@ -44,16 +39,7 @@ FIELDS = ",".join([
 # -- Funções --
 
 def fetch_page(page: int, limit: int = 100) -> dict:
-    """
-    Busca uma página de obras de arte da API.
 
-    Args:
-        page:  Número da página (começa em 1).
-        limit: Quantidade de registros por página (máx. 100).
-
-    Returns:
-        JSON completo da resposta com 'data' e 'pagination'.
-    """
     params = {
         "page": page,
         "limit": limit,
@@ -68,16 +54,7 @@ def fetch_page(page: int, limit: int = 100) -> dict:
 
 
 def fetch_all_pages(max_pages: int = None, limit: int = 100) -> list[dict]:
-    """
-    Itera sobre todas as páginas da API e retorna todos os registros.
 
-    Args:
-        max_pages: Limite de páginas a buscar (None = todas).
-        limit:     Registros por página.
-
-    Returns:
-        Lista de dicts com todos os artworks extraídos.
-    """
     all_records = []
     page = 1
 

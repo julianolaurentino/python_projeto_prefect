@@ -1,9 +1,3 @@
-"""
-extractor.py
-Orquestra a extração: chama o api_client, salva o JSON bruto
-e carrega os dados na camada Bronze do DuckDB.
-"""
-
 import json
 import os
 from datetime import datetime, timezone
@@ -17,7 +11,7 @@ from api_client import fetch_all_pages
 
 load_dotenv()
 
-# Caminhos configuráveis via .env com fallback para defaults locais
+# -- Constantes --
 RAW_DATA_DIR = Path(os.getenv("RAW_DATA_DIR", "data/raw"))
 DUCKDB_PATH   = Path(os.getenv("DUCKDB_PATH",  "data/warehouse/aic.duckdb"))
 MAX_PAGES     = int(os.getenv("MAX_PAGES", 0)) or None  # 0 = todas as páginas
@@ -26,7 +20,6 @@ MAX_PAGES     = int(os.getenv("MAX_PAGES", 0)) or None  # 0 = todas as páginas
 # -- Funções auxiliares e de persistência --
 
 def save_raw_json(records: list[dict], extracted_at: str) -> Path:
-    """Persiste os registros brutos em JSON para auditoria."""
     RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
     filename = RAW_DATA_DIR / f"artworks_{extracted_at}.json"
     with open(filename, "w", encoding="utf-8") as f:
@@ -36,17 +29,13 @@ def save_raw_json(records: list[dict], extracted_at: str) -> Path:
 
 
 def load_to_bronze(records: list[dict], extracted_at: str) -> None:
-    """
-    Carrega os registros brutos na tabela bronze.raw_artworks do DuckDB.
-    Cria o schema e a tabela se não existirem.
-    """
+
     DUCKDB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     con = duckdb.connect(str(DUCKDB_PATH))
 
     con.execute("CREATE SCHEMA IF NOT EXISTS bronze")
 
-    # Tabela bronze: cada linha é um registro bruto com metadados de extração
     con.execute("""
         CREATE TABLE IF NOT EXISTS bronze.raw_artworks (
             id                   INTEGER,
@@ -65,7 +54,7 @@ def load_to_bronze(records: list[dict], extracted_at: str) -> None:
             colorfulness         DOUBLE,
             style_title          VARCHAR,
             classification_title VARCHAR,
-            term_titles          VARCHAR,   -- lista serializada como string
+            term_titles          VARCHAR,   
             dimensions           VARCHAR,
             credit_line          VARCHAR,
             _extracted_at        TIMESTAMP,
@@ -113,7 +102,6 @@ def load_to_bronze(records: list[dict], extracted_at: str) -> None:
 
 
 def run() -> None:
-    """Ponto de entrada da extração."""
     extracted_at = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     logger.info(f"Iniciando extração — {extracted_at}")
 
