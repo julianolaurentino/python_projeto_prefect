@@ -1,12 +1,12 @@
-# Ambiente
+# Ambiente — nunca versionar o .env real
 .env
 .venv/
 __pycache__/
 *.pyc
 *.pyo
 
-# Dados gerados
-data/raw/*.json
+# Dados gerados em runtime
+data/raw/
 data/warehouse/*.duckdb
 data/warehouse/*.duckdb.wal
 logs/

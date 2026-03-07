@@ -3,22 +3,21 @@ main_flow.py
 Flow principal do pipeline ELT do Art Institute of Chicago.
 
 Sequência:
-    1. extract  — busca obras na API do AIC
-    2. load     — salva JSON bruto + carrega no Bronze (DuckDB)
+    1. extract   — busca obras na API do AIC
+    2. load      — salva JSON bruto + carrega no Bronze (DuckDB)
     3. transform — executa dbt run (Bronze → Silver → Gold)
-    4. test     — executa dbt test para validar os modelos
+    4. test      — executa dbt test para validar os modelos
 """
 
 import os
+
 from dotenv import load_dotenv
 from prefect import flow
-from loguru import logger
+from prefect.logging import get_run_logger
 
 from tasks.extract_task import extract_artworks
 from tasks.load_task import load_artworks
 from tasks.transform_task import run_dbt, run_dbt_test
-
-load_dotenv()
 
 
 @flow(
@@ -35,6 +34,9 @@ def aic_elt_pipeline(max_pages: int = None) -> None:
                    None = todas as páginas (~131k obras).
                    Use 2 ou 3 para testes rápidos.
     """
+    # Logger nativo do Prefect — aparece na UI em Flow Runs
+    logger = get_run_logger()
+
     logger.info("=" * 50)
     logger.info("Iniciando pipeline AIC ELT")
     logger.info(f"max_pages={max_pages}")
@@ -57,6 +59,7 @@ def aic_elt_pipeline(max_pages: int = None) -> None:
 
 if __name__ == "__main__":
     # Execução local para testes
-    # MAX_PAGES=2 busca ~200 obras — ideal para desenvolvimento
+    # load_dotenv() aqui garante que o .env é carregado antes de qualquer coisa
+    load_dotenv()
     max_pages = int(os.getenv("MAX_PAGES", 0)) or None
     aic_elt_pipeline(max_pages=max_pages)
