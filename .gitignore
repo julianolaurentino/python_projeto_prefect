@@ -18,7 +18,7 @@ __pycache__/
 *.json
 *.db
 datasets/
-data/
+#data/
 logs/
 
 # 📊 Arquivos do Databricks
@@ -53,3 +53,8 @@ venv/
 # Banco DuckDB (pode ser grande)
 warehouse/*.duckdb
 warehouse/*.duckdb.wal
+
+
+target/
+dbt_packages/
+logs/

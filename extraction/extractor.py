@@ -12,6 +12,7 @@ from api_client import fetch_all_pages
 load_dotenv()
 
 # -- Constantes --
+
 RAW_DATA_DIR = Path(os.getenv("RAW_DATA_DIR", "data/raw"))
 DUCKDB_PATH   = Path(os.getenv("DUCKDB_PATH",  "data/warehouse/aic.duckdb"))
 MAX_PAGES     = int(os.getenv("MAX_PAGES", 0)) or None  # 0 = todas as páginas

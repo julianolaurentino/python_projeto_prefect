@@ -1,0 +1,57 @@
+version: 2
+
+sources:
+  - name: bronze
+    schema: bronze
+    description: "Dados brutos carregados pelo extractor.py a partir da API do Art Institute of Chicago."
+    tables:
+      - name: raw_artworks
+        description: "Obras de arte extraídas diretamente da API artic.edu, sem transformações."
+        columns:
+          - name: id
+            description: "Identificador único da obra."
+          - name: title
+            description: "Título da obra."
+          - name: artist_title
+            description: "Nome do artista principal."
+          - name: date_start
+            description: "Ano de início de criação da obra."
+          - name: date_end
+            description: "Ano de fim de criação da obra."
+          - name: artwork_type_title
+            description: "Tipo da obra (pintura, escultura, gravura, etc.)."
+          - name: department_title
+            description: "Departamento do museu responsável pela obra."
+          - name: is_public_domain
+            description: "Indica se a obra está em domínio público."
+          - name: _extracted_at
+            description: "Timestamp UTC da extração."
+          - name: _source
+            description: "URL base da fonte dos dados."
+
+models:
+  - name: bronze_artworks
+    description: "View sobre raw_artworks. Exposição direta dos dados brutos sem alteração."
+
+  - name: silver_artworks
+    description: "Dados limpos, deduplicados e tipados. Inclui campo derivado historical_period."
+    columns:
+      - name: id
+        description: "Identificador único da obra."
+        tests:
+          - unique
+          - not_null
+      - name: historical_period
+        description: "Período histórico calculado a partir do date_start."
+
+  - name: gold_artworks_by_type
+    description: "Agregação de obras por tipo. Inclui contagens e média de colorfulness."
+
+  - name: gold_artworks_by_period
+    description: "Distribuição de obras por período histórico com range de anos."
+
+  - name: gold_artworks_by_department
+    description: "Obras por departamento com contagem de artistas e obras em exibição."
+
+  - name: gold_top_artists
+    description: "Top 100 artistas com mais obras. Inclui diversidade de tipos e departamentos."
