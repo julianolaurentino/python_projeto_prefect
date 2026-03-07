@@ -1,40 +1,6 @@
 services:
 
   # ─────────────────────────────────────────
-  # Extração + Carga → Bronze
-  # ─────────────────────────────────────────
-  extraction:
-    build:
-      context: ./extraction
-      dockerfile: Dockerfile
-    container_name: aic_extraction
-    env_file: .env
-    volumes:
-      - ./data:/app/data
-      - ./extraction/src:/app/src
-    networks:
-      - aic_network
-    depends_on:
-      - prefect-server
-
-  # ─────────────────────────────────────────
-  # Transformação → Silver + Gold (dbt)
-  # ─────────────────────────────────────────
-  transform:
-    build:
-      context: ./transform
-      dockerfile: Dockerfile
-    container_name: aic_transform
-    env_file: .env
-    volumes:
-      - ./data:/app/data
-      - ./transform:/app/transform
-    networks:
-      - aic_network
-    depends_on:
-      - extraction
-
-  # ─────────────────────────────────────────
   # Orquestração — Prefect Server (UI + API)
   # ─────────────────────────────────────────
   prefect-server:
@@ -54,7 +20,8 @@ services:
       retries: 5
 
   # ─────────────────────────────────────────
-  # Orquestração — Prefect Worker (executa os flows)
+  # Orquestração — Prefect Worker
+  # Executa o pipeline completo: Extract → Load → dbt run → dbt test
   # ─────────────────────────────────────────
   prefect-worker:
     build:
@@ -64,6 +31,8 @@ services:
     env_file: .env
     environment:
       - PREFECT_API_URL=http://prefect-server:4200/api
+      - DUCKDB_PATH=/app/data/warehouse/aic.duckdb
+      - DBT_PROJECT_DIR=/app/transform
     volumes:
       - ./data:/app/data
       - ./orchestration:/app/orchestration

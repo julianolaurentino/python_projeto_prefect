@@ -3,5 +3,8 @@ aic_pipeline:
   outputs:
     dev:
       type: duckdb
-      path: "{{ env_var('DUCKDB_PATH', '../data/warehouse/aic.duckdb') }}"
+      # DUCKDB_PATH deve estar definido no .env
+      # Docker:  DUCKDB_PATH=/app/data/warehouse/aic.duckdb
+      # Local:   DUCKDB_PATH=data/warehouse/aic.duckdb
+      path: "{{ env_var('DUCKDB_PATH') }}"
       threads: 4

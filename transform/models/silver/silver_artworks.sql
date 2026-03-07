@@ -46,7 +46,7 @@ cleaned AS (
         COALESCE(is_public_domain, FALSE)       AS is_public_domain,
         COALESCE(is_on_view, FALSE)             AS is_on_view,
 
-        -- Colorfulness: zera valores negativos ou absurdos
+        -- Colorfulness: nulo para valores negativos ou absurdos
         CASE
             WHEN colorfulness >= 0 THEN ROUND(colorfulness, 4)
             ELSE NULL
@@ -56,7 +56,9 @@ cleaned AS (
         term_titles,
 
         -- Período histórico calculado a partir do date_start
+        -- NULL explícito primeiro para evitar que NULLs caiam no ELSE
         CASE
+            WHEN date_start IS NULL  THEN 'Período Desconhecido'
             WHEN date_start < 0      THEN 'Antes de Cristo'
             WHEN date_start < 1400   THEN 'Medieval e Anterior'
             WHEN date_start < 1600   THEN 'Renascimento'

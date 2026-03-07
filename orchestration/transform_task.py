@@ -8,13 +8,23 @@ import subprocess
 from pathlib import Path
 
 from prefect import task
-from loguru import logger
+from prefect.logging import get_run_logger
 
-DBT_PROJECT_DIR = Path(
-    os.getenv("DBT_PROJECT_DIR", "/app/transform")  # docker default
-    if os.path.exists("/app/transform")
-    else str(Path(__file__).resolve().parents[3] / "transform")  # local fallback
-)
+
+def _get_dbt_dir() -> Path:
+    """
+    Retorna o diretório do projeto dbt conforme o ambiente.
+    Avaliado em runtime para garantir o path correto
+    tanto no Docker quanto localmente.
+    """
+    # Variável de ambiente tem prioridade (Docker via .env)
+    if os.getenv("DBT_PROJECT_DIR"):
+        return Path(os.getenv("DBT_PROJECT_DIR"))
+    # Fallback: path Docker padrão
+    if os.path.exists("/app/transform"):
+        return Path("/app/transform")
+    # Fallback local: sobe da pasta tasks até a raiz do projeto
+    return Path(__file__).resolve().parents[3] / "transform"
 
 
 @task(
@@ -31,24 +41,33 @@ def run_dbt(extracted_at: str) -> None:
     Args:
         extracted_at: Timestamp do run atual (usado apenas para logging).
     """
-    logger.info(f"Iniciando dbt run | extracted_at={extracted_at}")
+    logger = get_run_logger()
+    dbt_dir = _get_dbt_dir()
 
-    env = os.environ.copy()
+    logger.info(f"Iniciando dbt run | extracted_at={extracted_at}")
+    logger.info(f"dbt project dir: {dbt_dir}")
 
     result = subprocess.run(
-        ["dbt", "run", "--project-dir", str(DBT_PROJECT_DIR), "--profiles-dir", str(DBT_PROJECT_DIR)],
+        [
+            "dbt", "run",
+            "--project-dir", str(dbt_dir),
+            "--profiles-dir", str(dbt_dir),
+        ],
         capture_output=True,
         text=True,
-        env=env,
+        env=os.environ.copy(),
     )
 
-    # Loga a saída do dbt
     if result.stdout:
         for line in result.stdout.strip().splitlines():
             logger.info(f"[dbt] {line}")
 
+    # Loga stderr sempre — pode ter warnings úteis mesmo sem erro
+    if result.stderr:
+        for line in result.stderr.strip().splitlines():
+            logger.warning(f"[dbt stderr] {line}")
+
     if result.returncode != 0:
-        logger.error(f"[dbt] ERRO:\n{result.stderr}")
         raise RuntimeError(f"dbt run falhou com código {result.returncode}")
 
     logger.info("dbt run concluído com sucesso")
@@ -63,10 +82,17 @@ def run_dbt(extracted_at: str) -> None:
 )
 def run_dbt_test() -> None:
     """Roda os testes definidos no sources.yml (unique, not_null, etc.)."""
+    logger = get_run_logger()
+    dbt_dir = _get_dbt_dir()
+
     logger.info("Iniciando dbt test")
 
     result = subprocess.run(
-        ["dbt", "test", "--project-dir", str(DBT_PROJECT_DIR), "--profiles-dir", str(DBT_PROJECT_DIR)],
+        [
+            "dbt", "test",
+            "--project-dir", str(dbt_dir),
+            "--profiles-dir", str(dbt_dir),
+        ],
         capture_output=True,
         text=True,
         env=os.environ.copy(),
@@ -76,8 +102,12 @@ def run_dbt_test() -> None:
         for line in result.stdout.strip().splitlines():
             logger.info(f"[dbt test] {line}")
 
+    if result.stderr:
+        for line in result.stderr.strip().splitlines():
+            logger.warning(f"[dbt test stderr] {line}")
+
     if result.returncode != 0:
-        logger.warning(f"[dbt test] Alguns testes falharam:\n{result.stderr}")
         # Não interrompe o pipeline — apenas avisa
+        logger.warning("Alguns testes falharam — verifique os logs acima.")
     else:
         logger.info("Todos os testes passaram")
