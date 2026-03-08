@@ -1,4 +1,4 @@
-# AIC ELT Pipeline 🎨
+# AIC ELT Pipeline
 
 Pipeline de dados com arquitetura medalhão utilizando a API pública do **Art Institute of Chicago**, construído como projeto de portfólio em Engenharia de Dados.
 

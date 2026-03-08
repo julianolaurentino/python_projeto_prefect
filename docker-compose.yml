@@ -28,7 +28,6 @@ services:
       context: ./orchestration
       dockerfile: Dockerfile
     container_name: aic_prefect_worker
-    env_file: .env
     environment:
       - PREFECT_API_URL=http://prefect-server:4200/api
       - DUCKDB_PATH=/app/data/warehouse/aic.duckdb
@@ -46,7 +45,7 @@ services:
     command: >
       sh -c "
         prefect work-pool create aic-pool --type process --overwrite &&
-        python /app/orchestration/flows/main_flow.py
+        prefect worker start --pool aic-pool
       "
 
 volumes:

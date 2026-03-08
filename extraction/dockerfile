@@ -1,10 +1,13 @@
 FROM python:3.11-slim
 
-WORKDIR /app
+# place ourselves directly in the source tree so that a bare import
+# of api_client will resolve when extractor.py is executed
+WORKDIR /app/src
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt ../
+RUN pip install --no-cache-dir -r ../requirements.txt
 
-COPY src/ ./src/
+# copy the python modules into the current working directory
+COPY src/ ./
 
-CMD ["python", "src/extractor.py"]
+CMD ["python", "extractor.py"]

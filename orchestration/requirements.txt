@@ -1,0 +1,5 @@
+prefect==2.19.3
+duckdb
+dbt-duckdb
+python-dotenv
+requests
