@@ -25,16 +25,10 @@ from tasks.transform_task import run_dbt, run_dbt_test
     description="Pipeline ELT do Art Institute of Chicago com arquitetura medalhão.",
     log_prints=True,
 )
-def aic_elt_pipeline(max_pages: int = None) -> None:
-    """
-    Executa o pipeline ELT completo.
+def aic_elt_pipeline(max_pages: int = 0) -> None:   # ← 0 no lugar de None
+    # Converte 0 para None (0 = todas as páginas)
+    max_pages = max_pages if max_pages and max_pages > 0 else None
 
-    Args:
-        max_pages: Número máximo de páginas da API a buscar.
-                   None = todas as páginas (~131k obras).
-                   Use 2 ou 3 para testes rápidos.
-    """
-    # Logger nativo do Prefect — aparece na UI em Flow Runs
     logger = get_run_logger()
 
     logger.info("=" * 50)
@@ -58,8 +52,6 @@ def aic_elt_pipeline(max_pages: int = None) -> None:
 
 
 if __name__ == "__main__":
-    # Execução local para testes
-    # load_dotenv() aqui garante que o .env é carregado antes de qualquer coisa
     load_dotenv()
-    max_pages = int(os.getenv("MAX_PAGES", 0)) or None
+    max_pages = int(os.getenv("MAX_PAGES", 0))  # ← remove o "or None"
     aic_elt_pipeline(max_pages=max_pages)
