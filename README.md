@@ -6,25 +6,7 @@ Pipeline de dados com arquitetura medalhão utilizando a API pública do **Art I
 
 ## Arquitetura
 
-```
-API (artic.edu)
-    │
-    ▼ Request
-┌─────────────────────────────────────────────────────────┐
-│  Prefect — Orquestração                                 │
-│  ┌──────────────────────────────────────────────────┐   │
-│  │                                                  │   │
-│  │  Extract ──► Load ──► Transform (dbt)            │   │
-│  │  Python        Python   ┌────────────────────┐   │   │
-│  │  + JSON                 │ 🥉 Bronze          │   │   │
-│  │                         │ 🥈 Silver          │   │   │
-│  │                         │ 🥇 Gold            │   │   │
-│  │                         └────────────────────┘   │   │
-│  │                           DuckDB (aic.duckdb)     │   │
-│  └──────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-         Container: Docker
-```
+![img](https://i.postimg.cc/X7gJB1zT/Captura-de-tela-de-2026-03-08-22-05-24.png)
 
 ### Camadas Medalhão
 
