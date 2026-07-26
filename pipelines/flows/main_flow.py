@@ -15,9 +15,14 @@ from dotenv import load_dotenv
 from prefect import flow
 from prefect.logging import get_run_logger
 
-from python_pipeline_aic.pipelines.tasks.extract_task import extract_artworks
-from python_pipeline_aic.pipelines.tasks.load_task import load_artworks
-from python_pipeline_aic.pipelines.tasks.transform_task import run_dbt, run_dbt_test
+try:
+    from orchestration.tasks.extract_task import extract_artworks
+    from orchestration.tasks.load_task import load_artworks
+    from orchestration.tasks.transform_task import run_dbt, run_dbt_test
+except ModuleNotFoundError:
+    from pipelines.tasks.extract_task import extract_artworks
+    from pipelines.tasks.load_task import load_artworks
+    from pipelines.tasks.transform_task import run_dbt, run_dbt_test
 
 
 @flow(

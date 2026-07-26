@@ -21,10 +21,10 @@ def _get_dbt_dir() -> Path:
     if os.getenv("DBT_PROJECT_DIR"):
         return Path(os.getenv("DBT_PROJECT_DIR"))
     # Fallback: path Docker padrão
-    if os.path.exists("/app/transform"):
-        return Path("/app/transform")
+    if os.path.exists("/app/dbt"):
+        return Path("/app/dbt")
     # Fallback local: sobe da pasta tasks até a raiz do projeto
-    return Path(__file__).resolve().parents[3] / "transform"
+    return Path(__file__).resolve().parents[2] / "dbt"
 
 
 @task(

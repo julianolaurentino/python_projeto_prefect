@@ -10,7 +10,7 @@ from prefect import task
 from loguru import logger
 
 # Permite importar o módulo de extração
-sys.path.append(str(Path(__file__).resolve().parents[3] / "extraction" / "src"))  # local
+sys.path.append(str(Path(__file__).resolve().parents[2] / "src"))  # local
 sys.path.append("/app/extraction/src")  # docker
 
 from api_client import fetch_all_pages

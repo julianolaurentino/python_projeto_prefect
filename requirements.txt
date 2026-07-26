@@ -1,0 +1,3 @@
+-r src/requirements.txt
+-r pipelines/requirements.txt
+-r dbt/requirements.txt

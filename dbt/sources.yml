@@ -5,7 +5,7 @@ sources:
     schema: bronze
     description: "Dados brutos carregados pelo extractor.py a partir da API do Art Institute of Chicago."
     tables:
-      - name: raw_artworks
+      - name: bronze_artworks
         description: "Obras de arte extraídas diretamente da API artic.edu, sem transformações."
         columns:
           - name: id
@@ -31,7 +31,7 @@ sources:
 
 models:
   - name: bronze_artworks
-    description: "View sobre raw_artworks. Exposição direta dos dados brutos sem alteração."
+    description: "View sobre bronze_artworks. Exposição direta dos dados brutos sem alteração."
 
   - name: silver_artworks
     description: "Dados limpos, deduplicados e tipados. Inclui campo derivado historical_period."

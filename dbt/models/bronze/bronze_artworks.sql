@@ -24,4 +24,4 @@ SELECT
     credit_line,
     _extracted_at,
     _source
-FROM bronze.raw_artworks
+FROM bronze.bronze_artworks

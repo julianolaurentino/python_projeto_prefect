@@ -6,7 +6,7 @@ Pipeline de dados com arquitetura medalhão utilizando a API pública do **Art I
 
 ## Arquitetura
 
-![img](https://i.postimg.cc/CKbrZgJn/Group-3.png)
+![img](https://i.postimg.cc/Kc0LvXV0/Group-4.png)
 
 
 ### Camadas Medalhão
@@ -26,7 +26,7 @@ Pipeline de dados com arquitetura medalhão utilizando a API pública do **Art I
 | **Python 3.11** | Extração e carga |
 | **DuckDB** | Banco de dados local (warehouse) |
 | **dbt-duckdb** | Transformações SQL (Silver + Gold) |
-| **Prefect 2** | Orquestração do pipeline |
+| **Prefect 3** | Orquestração do pipeline |
 | **Docker** | Containerização |
 
 ---
@@ -36,25 +36,24 @@ Pipeline de dados com arquitetura medalhão utilizando a API pública do **Art I
 ```
 aic-elt-pipeline/
 ├── src/
-│   ├── api_client.py      # Comunicação com a API (retry + paginação)
-│   ├── extractor.py       # Orquestra extração → JSON bruto → Bronze
-│   └── utils.py           # Logging e helpers
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── api_client.py
+│   ├── extractor.py
+│   └── ...
 │
 ├── data/
-│   ├── raw/                   # JSONs brutos (gerado em runtime)
+│   ├── raw/
 │   └── warehouse/
-│       └── aic.duckdb         # Banco DuckDB (gerado em runtime)
-│
-├── docker/
-│   ├── dockerfile-src
-│   ├── dockerfile-prefect
-│   └── dockerfile-dbt
+│       ├── aic.duckdb
+│       └── bronze/
 │
 ├── dbt/
+│   ├── Dockerfile
+│   ├── requirements.txt
 │   ├── dbt_project.yml
 │   ├── profiles.yml
 │   └── models/
-│       ├── sources.yml
 │       ├── bronze/
 │       │   └── bronze_artworks.sql
 │       ├── silver/
@@ -65,17 +64,19 @@ aic-elt-pipeline/
 │           ├── gold_artworks_by_department.sql
 │           └── gold_top_artists.sql
 │
-├── pieplines/
+├── pipelines/
+│   ├── Dockerfile
 │   ├── requirements.txt
-│   └── flows/
-│       ├── main_flow.py       # Flow principal ELT
-│       └── tasks/
-│           ├── extract_task.py
-│           ├── load_task.py
-│           └── transform_task.py
+│   ├── __init__.py
+│   ├── flows/
+│   │   └── main_flow.py
+│   └── tasks/
+│       ├── extract_task.py
+│       ├── load_task.py
+│       └── transform_task.py
 │
 ├── docker-compose.yml
-├── .env.example
+├── requirements.txt       # agregador opcional (inclui src/pipelines/dbt)
 ├── .gitignore
 └── README.md
 ```
@@ -98,7 +99,9 @@ cd aic-elt-pipeline
 ### 2. Configure o ambiente
 
 ```bash
-cp .env.example .env
+cat > .env <<EOF
+MAX_PAGES=2
+EOF
 ```
 
 Para testes rápidos, mantenha `MAX_PAGES=2` no `.env` (~200 obras).
@@ -107,7 +110,7 @@ Para extração completa (~131k obras), ajuste para `MAX_PAGES=0`.
 ### 3. Suba os containers
 
 ```bash
-docker-compose up --build
+docker compose up -d --build
 ```
 
 O pipeline irá:
@@ -118,20 +121,21 @@ O pipeline irá:
 
 ```bash
 # Extração
-cd extraction
-pip install -r requirements.txt
+pip install -r src/requirements.txt
 python src/extractor.py
 
 # Transformação
-cd ../transform
-pip install -r requirements.txt
-dbt run --profiles-dir .
+pip install -r dbt/requirements.txt
+dbt run --project-dir dbt --profiles-dir dbt
 
 # Orquestração
-cd ../orchestration
-pip install -r requirements.txt
-python flows/main_flow.py
+pip install -r pipelines/requirements.txt
+python pipelines/flows/main_flow.py
 ```
+
+Obs.: o `docker-compose.yml` executa o fluxo no serviço `prefect-worker` com os
+volumes de `src`, `pipelines`, `dbt` e `data`, além de `DUCKDB_PATH=/app/data/warehouse/aic.duckdb`
+e `DBT_PROJECT_DIR=/app/dbt`.
 
 ---
 

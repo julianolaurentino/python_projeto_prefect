@@ -12,6 +12,18 @@ WITH deduped AS (
     WHERE id IS NOT NULL
 ),
 
+typed AS (
+    SELECT
+        *,
+        TRY_CAST(NULLIF(TRIM(date_start), '') AS INTEGER) AS date_start_int,
+        TRY_CAST(NULLIF(TRIM(date_end), '') AS INTEGER) AS date_end_int,
+        TRY_CAST(NULLIF(TRIM(colorfulness), '') AS DOUBLE) AS colorfulness_num,
+        COALESCE(TRY_CAST(NULLIF(TRIM(is_public_domain), '') AS BOOLEAN), FALSE) AS is_public_domain_bool,
+        COALESCE(TRY_CAST(NULLIF(TRIM(is_on_view), '') AS BOOLEAN), FALSE) AS is_on_view_bool
+    FROM deduped
+    WHERE rn = 1
+),
+
 cleaned AS (
     SELECT
         id,
@@ -23,11 +35,11 @@ cleaned AS (
 
         -- Datas: mantém inteiros, valida range mínimo
         CASE
-            WHEN date_start BETWEEN -5000 AND 2100 THEN date_start
+            WHEN date_start_int BETWEEN -5000 AND 2100 THEN date_start_int
             ELSE NULL
         END                                     AS date_start,
         CASE
-            WHEN date_end BETWEEN -5000 AND 2100 THEN date_end
+            WHEN date_end_int BETWEEN -5000 AND 2100 THEN date_end_int
             ELSE NULL
         END                                     AS date_end,
         NULLIF(TRIM(date_display), '')          AS date_display,
@@ -43,12 +55,12 @@ cleaned AS (
         NULLIF(TRIM(credit_line), '')           AS credit_line,
 
         -- Booleans com default false
-        COALESCE(is_public_domain, FALSE)       AS is_public_domain,
-        COALESCE(is_on_view, FALSE)             AS is_on_view,
+        is_public_domain_bool                    AS is_public_domain,
+        is_on_view_bool                          AS is_on_view,
 
         -- Colorfulness: nulo para valores negativos ou absurdos
         CASE
-            WHEN colorfulness >= 0 THEN ROUND(colorfulness, 4)
+            WHEN colorfulness_num >= 0 THEN ROUND(colorfulness_num, 4)
             ELSE NULL
         END                                     AS colorfulness,
 
@@ -58,23 +70,22 @@ cleaned AS (
         -- Período histórico calculado a partir do date_start
         -- NULL explícito primeiro para evitar que NULLs caiam no ELSE
         CASE
-            WHEN date_start IS NULL  THEN 'Período Desconhecido'
-            WHEN date_start < 0      THEN 'Antes de Cristo'
-            WHEN date_start < 1400   THEN 'Medieval e Anterior'
-            WHEN date_start < 1600   THEN 'Renascimento'
-            WHEN date_start < 1800   THEN 'Barroco e Iluminismo'
-            WHEN date_start < 1900   THEN 'Século XIX'
-            WHEN date_start < 1945   THEN 'Início Século XX'
-            WHEN date_start < 2000   THEN 'Pós-Guerra e Contemporâneo'
-            WHEN date_start >= 2000  THEN 'Século XXI'
+            WHEN date_start_int IS NULL  THEN 'Período Desconhecido'
+            WHEN date_start_int < 0      THEN 'Antes de Cristo'
+            WHEN date_start_int < 1400   THEN 'Medieval e Anterior'
+            WHEN date_start_int < 1600   THEN 'Renascimento'
+            WHEN date_start_int < 1800   THEN 'Barroco e Iluminismo'
+            WHEN date_start_int < 1900   THEN 'Século XIX'
+            WHEN date_start_int < 1945   THEN 'Início Século XX'
+            WHEN date_start_int < 2000   THEN 'Pós-Guerra e Contemporâneo'
+            WHEN date_start_int >= 2000  THEN 'Século XXI'
             ELSE 'Período Desconhecido'
         END                                     AS historical_period,
 
         _extracted_at,
         _source
 
-    FROM deduped
-    WHERE rn = 1
+    FROM typed
 )
 
 SELECT * FROM cleaned

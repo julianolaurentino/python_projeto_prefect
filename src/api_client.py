@@ -35,8 +35,7 @@ def fetch_page(page: int, limit: int = 100) -> dict:
 
     return response.json()
 
-# Pegando apenas 10 paginas como amostra para não sobrecarregar a API e evitar bloqueio.
-def fetch_all_pages(max_pages: int = 10, limit: int = 100) -> list[dict]:
+def fetch_all_pages(max_pages: int, limit: int = 100) -> list[dict]:
 
     all_records = []
     page = 1

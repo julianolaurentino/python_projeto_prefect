@@ -14,7 +14,13 @@ services:
     networks:
       - aic_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:4200/api/health').read()",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,19 +31,19 @@ services:
   # ─────────────────────────────────────────
   prefect-worker:
     build:
-      context: ./orchestration
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: pipelines/Dockerfile
     container_name: aic_prefect_worker
     env_file: .env
     environment:
       - PREFECT_API_URL=http://prefect-server:4200/api
       - DUCKDB_PATH=/app/data/warehouse/aic.duckdb
-      - DBT_PROJECT_DIR=/app/transform
+      - DBT_PROJECT_DIR=/app/dbt
     volumes:
       - ./data:/app/data
-      - ./orchestration:/app/orchestration
-      - ./extraction:/app/extraction
-      - ./transform:/app/transform
+      - ./pipelines:/app/orchestration
+      - ./src:/app/extraction/src
+      - ./dbt:/app/dbt
     networks:
       - aic_network
     depends_on:
