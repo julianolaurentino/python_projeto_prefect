@@ -35,7 +35,13 @@ def fetch_page(page: int, limit: int = 100) -> dict:
 
     return response.json()
 
-def fetch_all_pages(max_pages: int, limit: int = 100) -> list[dict]:
+def fetch_all_pages(limit: int = 100, max_pages: int = None) -> list:
+    """
+    Função para buscar todos os registros da API, lidando com paginação.
+    :param limit: Número de registros por página (padrão: 100)
+    :param max_pages: Número máximo de páginas a serem buscadas (padrão: None, busca todas)
+    :return: Lista de registros obtidos da API
+    """
 
     all_records = []
     page = 1

@@ -13,7 +13,7 @@ from loguru import logger
 sys.path.append(str(Path(__file__).resolve().parents[2] / "src"))  # local
 sys.path.append("/app/extraction/src")  # docker
 
-from api_client import fetch_all_pages
+from src.api_client import fetch_all_pages
 
 
 @task(

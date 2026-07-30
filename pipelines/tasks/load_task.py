@@ -14,7 +14,7 @@ from loguru import logger
 sys.path.append(str(Path(__file__).resolve().parents[2] / "src"))  # local
 sys.path.append("/app/extraction/src")  # docker
 
-from extractor import save_bronze_json, load_to_bronze
+from src.extractor import save_bronze_json, load_to_bronze
 
 
 @task(

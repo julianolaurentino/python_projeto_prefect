@@ -16,9 +16,9 @@ from prefect import flow
 from prefect.logging import get_run_logger
 
 try:
-    from orchestration.tasks.extract_task import extract_artworks
-    from orchestration.tasks.load_task import load_artworks
-    from orchestration.tasks.transform_task import run_dbt, run_dbt_test
+    from pipelines.tasks.extract_task import extract_artworks
+    from pipelines.tasks.load_task import load_artworks
+    from pipelines.tasks.transform_task import run_dbt, run_dbt_test
 except ModuleNotFoundError:
     from pipelines.tasks.extract_task import extract_artworks
     from pipelines.tasks.load_task import load_artworks
