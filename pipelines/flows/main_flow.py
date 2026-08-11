@@ -10,19 +10,20 @@ Sequência:
 """
 
 import os
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from dotenv import load_dotenv
 from prefect import flow
 from prefect.logging import get_run_logger
 
-try:
-    from pipelines.tasks.extract_task import extract_artworks
-    from pipelines.tasks.load_task import load_artworks
-    from pipelines.tasks.transform_task import run_dbt, run_dbt_test
-except ModuleNotFoundError:
-    from pipelines.tasks.extract_task import extract_artworks
-    from pipelines.tasks.load_task import load_artworks
-    from pipelines.tasks.transform_task import run_dbt, run_dbt_test
+from pipelines.tasks.extract_task import extract_artworks
+from pipelines.tasks.load_task import load_artworks
+from pipelines.tasks.transform_task import run_dbt, run_dbt_test
 
 
 @flow(
@@ -58,5 +59,7 @@ def aic_elt_pipeline(max_pages: int = 0) -> None:   # ← 0 no lugar de None
 
 if __name__ == "__main__":
     load_dotenv()
+    os.environ.setdefault("DUCKDB_PATH", str(PROJECT_ROOT / "data" / "warehouse" / "aic.duckdb"))
+    os.environ.setdefault("BRONZE_PATH", str(PROJECT_ROOT / "data" / "bronze"))
     max_pages = int(os.getenv("MAX_PAGES", 0))  # ← remove o "or None"
     aic_elt_pipeline(max_pages=max_pages)

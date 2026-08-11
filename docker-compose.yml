@@ -38,11 +38,12 @@ services:
     environment:
       - PREFECT_API_URL=http://prefect-server:4200/api
       - DUCKDB_PATH=/app/data/warehouse/aic.duckdb
+      - BRONZE_PATH=/app/data/bronze
       - DBT_PROJECT_DIR=/app/dbt
     volumes:
       - ./data:/app/data
-      - ./pipelines:/app/orchestration
-      - ./src:/app/extraction/src
+      - ./pipelines:/app/pipelines
+      - ./src:/app/src
       - ./dbt:/app/dbt
     networks:
       - aic_network
@@ -52,7 +53,7 @@ services:
     command: >
       sh -c "
         prefect work-pool create aic-pool --type process --overwrite &&
-        python /app/orchestration/flows/main_flow.py
+        python -m pipelines.flows.main_flow
       "
 
 volumes:

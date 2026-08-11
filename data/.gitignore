@@ -1,0 +1,8 @@
+
+target/
+dbt_packages/
+logs/
+profiles.yml
+.user.yml
+.README.md
+run_dbt.sh

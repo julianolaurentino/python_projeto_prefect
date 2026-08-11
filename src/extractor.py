@@ -65,6 +65,8 @@ def load_to_bronze(records: list[dict], extracted_at: datetime) -> None:
             all_keys.update(r.keys())
         all_keys = sorted(all_keys)
 
+        metadata_columns = {"_extracted_at", "_source"}
+
         # Verifica se tabela existe
         table_exists = con.execute(
             "SELECT COUNT(*) FROM information_schema.tables "
@@ -97,6 +99,15 @@ def load_to_bronze(records: list[dict], extracted_at: datetime) -> None:
                 con.execute(f"ALTER TABLE bronze.bronze_artworks ADD COLUMN {col} VARCHAR")
                 logger.info(f"Coluna adicionada: {col}")
 
+        table_columns = [
+            row[0]
+            for row in con.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_schema = 'bronze' AND table_name = 'bronze_artworks' "
+                "ORDER BY ordinal_position"
+            ).fetchall()
+        ]
+
         # Proteção contra duplicatas: busca ids já existentes
         try:
             existing_ids = {
@@ -125,16 +136,24 @@ def load_to_bronze(records: list[dict], extracted_at: datetime) -> None:
         # Prepara linhas para inserção
         rows = []
         for r in new_records:
-            row = tuple(
-                json.dumps(r.get(key), ensure_ascii=False)
-                if isinstance(r.get(key), (list, dict))
-                else str(r.get(key)) if r.get(key) is not None else ""
-                for key in all_keys
-            ) + (extracted_at, "api.artic.edu")
-            rows.append(row)
+            row = []
+            for column_name in table_columns:
+                if column_name in metadata_columns:
+                    row.append(extracted_at if column_name == "_extracted_at" else "api.artic.edu")
+                    continue
+
+                value = r.get(column_name)
+                if isinstance(value, (list, dict)):
+                    row.append(json.dumps(value, ensure_ascii=False))
+                elif value is None:
+                    row.append("")
+                else:
+                    row.append(str(value))
+
+            rows.append(tuple(row))
 
         # Executa inserção dinâmica
-        placeholders = ", ".join(["?" for _ in range(len(all_keys) + 2)])
+        placeholders = ", ".join(["?" for _ in range(len(table_columns))])
         con.executemany(
             f"INSERT INTO bronze.bronze_artworks VALUES ({placeholders})",
             rows

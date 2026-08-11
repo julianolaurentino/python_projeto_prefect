@@ -87,55 +87,66 @@ aic-elt-pipeline/
 
 ### Pré-requisitos
 
-- Docker e Docker Compose instalados
+- Python 3.12+
+- ambiente virtual (`venv`)
+- permissões de escrita na pasta do projeto (especialmente em `data/`, `data/warehouse/`, `data/bronze/` e `data/dbt/`)
 
-### 1. Clone o repositório
+### 1. Entre na raiz do projeto
 
 ```bash
-git clone https://github.com/seu-usuario/aic-elt-pipeline.git
-cd aic-elt-pipeline
+cd /home/obzen/Documentos/workspace/python_pipeline_aic
 ```
 
-### 2. Configure o ambiente
+### 2. Crie e ative o ambiente virtual
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Instale as dependências
+
+```bash
+pip install -U pip
+pip install -r pipelines/requirements.txt
+```
+
+### 4. Configure o arquivo `.env`
 
 ```bash
 cat > .env <<EOF
-MAX_PAGES=2
+MAX_PAGES=1
 EOF
 ```
 
-Para testes rápidos, mantenha `MAX_PAGES=2` no `.env` (~200 obras).
-Para extração completa (~131k obras), ajuste para `MAX_PAGES=0`.
+- `MAX_PAGES=1` é recomendado para testes rápidos (~100 obras).
+- `MAX_PAGES=0` executa a extração completa (muitas páginas e mais tempo).
 
-### 3. Suba os containers
-
-```bash
-docker compose up -d --build
-```
-
-O pipeline irá:
-1. Subir o Prefect Server (UI disponível em `http://localhost:4200`)
-2. Executar o flow: Extract → Load → dbt run → dbt test
-
-### 4. Execução local (sem Docker)
+### 5. Execute o fluxo completo
 
 ```bash
-# Extração
-pip install -r src/requirements.txt
-python src/extractor.py
-
-# Transformação
-pip install -r dbt/requirements.txt
-dbt run --project-dir dbt --profiles-dir dbt
-
-# Orquestração
-pip install -r pipelines/requirements.txt
-python pipelines/flows/main_flow.py
+python -m pipelines.flows.main_flow
 ```
 
-Obs.: o `docker-compose.yml` executa o fluxo no serviço `prefect-worker` com os
-volumes de `src`, `pipelines`, `dbt` e `data`, além de `DUCKDB_PATH=/app/data/warehouse/aic.duckdb`
-e `DBT_PROJECT_DIR=/app/dbt`.
+Esse comando executa o processo atual do projeto:
+1. Extração da API do AIC
+2. Persistência do JSON bruto em `data/bronze/`
+3. Carga no DuckDB em `data/warehouse/aic.duckdb`
+4. `dbt run` para Bronze → Silver → Gold
+5. `dbt test` para validar os modelos
+
+### 6. Saídas esperadas
+
+- JSON bruto: `data/bronze/artworks_*.json`
+- Banco DuckDB: `data/warehouse/aic.duckdb`
+- Artefatos e logs do dbt: `data/dbt/target/` e `data/dbt/logs/`
+
+### 7. Execução do dbt separadamente (opcional)
+
+```bash
+dbt run --project-dir dbt --profiles-dir dbt --target-path data/dbt/target --log-path data/dbt/logs
+dbt test --project-dir dbt --profiles-dir dbt --target-path data/dbt/target --log-path data/dbt/logs
+```
 
 ---
 

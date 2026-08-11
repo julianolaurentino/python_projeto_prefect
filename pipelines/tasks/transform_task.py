@@ -10,6 +10,8 @@ from pathlib import Path
 from prefect import task
 from prefect.logging import get_run_logger
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 
 def _get_dbt_dir() -> Path:
     """
@@ -43,15 +45,20 @@ def run_dbt(extracted_at: str) -> None:
     """
     logger = get_run_logger()
     dbt_dir = _get_dbt_dir()
+    dbt_log_path = PROJECT_ROOT / "data" / "dbt" / "logs"
+    dbt_log_path.mkdir(parents=True, exist_ok=True)
 
     logger.info(f"Iniciando dbt run | extracted_at={extracted_at}")
     logger.info(f"dbt project dir: {dbt_dir}")
+    logger.info(f"dbt log path: {dbt_log_path}")
 
     result = subprocess.run(
         [
             "dbt", "run",
             "--project-dir", str(dbt_dir),
             "--profiles-dir", str(dbt_dir),
+            "--target-path", str(PROJECT_ROOT / "data" / "dbt" / "target"),
+            "--log-path", str(dbt_log_path),
         ],
         capture_output=True,
         text=True,
@@ -84,14 +91,19 @@ def run_dbt_test() -> None:
     """Roda os testes definidos no sources.yml (unique, not_null, etc.)."""
     logger = get_run_logger()
     dbt_dir = _get_dbt_dir()
+    dbt_log_path = PROJECT_ROOT / "data" / "dbt" / "logs"
+    dbt_log_path.mkdir(parents=True, exist_ok=True)
 
     logger.info("Iniciando dbt test")
+    logger.info(f"dbt log path: {dbt_log_path}")
 
     result = subprocess.run(
         [
             "dbt", "test",
             "--project-dir", str(dbt_dir),
             "--profiles-dir", str(dbt_dir),
+            "--target-path", str(PROJECT_ROOT / "data" / "dbt" / "target"),
+            "--log-path", str(dbt_log_path),
         ],
         capture_output=True,
         text=True,
