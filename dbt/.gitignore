@@ -6,3 +6,4 @@ profiles.yml
 .user.yml
 .README.md
 run_dbt.sh
+dbt_internal_packages/
